@@ -10,7 +10,7 @@ import cookieParser from 'cookie-parser';
 config();
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5173', // Your exact frontend URL
+  origin: 'https://mahtab-madni.github.io/JamiaHub.github.io/', // Your exact frontend URL
   credentials: true, // Allow cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
