@@ -5,7 +5,8 @@
   "main": "App.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node  App.js"
+    "start": "node App.js",
+    "vercel-start"  :  "node App.js"
   },
   "author": "Mahtab Mdni",
   "license": "ISC",

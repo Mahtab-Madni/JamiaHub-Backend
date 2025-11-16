@@ -18,6 +18,13 @@ app.use(cors({
 }));
 app.use(json());
 app.use(cookieParser());
+let isconnnected = false;
+app.use((req,res,next)=>{
+  if(!isconnnected){
+    connectDB();
+  }
+  next();
+})
 app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
@@ -26,8 +33,5 @@ app.use('/api/admin', adminRouter);
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server is running on  http://localhost:${PORT}`);
-    connectDB();
-});
+module.exports = app;
 
