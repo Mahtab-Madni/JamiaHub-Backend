@@ -7,31 +7,45 @@ import adminRouter from './routes/adminrouter.js';
 import { connectDB } from './lib/db.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+
 config();
+
 const app = express();
+
 app.use(cors({
-  origin: 'https://mahtab-madni.github.io/JamiaHub.github.io/', // Your exact frontend URL
-  credentials: true, // Allow cookies
+  origin: 'https://mahtab-madni.github.io', // Remove trailing slash and path
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Set-Cookie']
 }));
+
 app.use(json());
 app.use(cookieParser());
-let isconnnected = false;
-app.use((req,res,next)=>{
-  if(!isconnnected){
-    connectDB();
+
+// Connect to database once
+let isConnected = false;
+
+const dbMiddleware = async (req, res, next) => {
+  if (!isConnected) {
+    await connectDB();
+    isConnected = true;
   }
   next();
-})
+};
+
+app.use(dbMiddleware);
+
 app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/chats', chatRouter);
 app.use('/api/admin', adminRouter);
 
-const PORT = process.env.PORT || 3000;
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ message: 'API is running' });
+});
 
-module.exports = app;
-
+// Export for Vercel serverless
+export default app;
