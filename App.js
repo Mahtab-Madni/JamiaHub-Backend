@@ -13,7 +13,10 @@ config();
 const app = express();
 
 app.use(cors({
-  origin: 'https://mahtab-madni.github.io', // Remove trailing slash and path
+  origin: [
+    'https://jamiahub.github.io',
+    'http://localhost:5173' // Vite dev server
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
