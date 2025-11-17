@@ -15,6 +15,7 @@ const app = express();
 app.use(cors({
   origin: [
     'https://jamiahub.github.io',
+    'http://localhost:3000',
     'http://localhost:5173' // Vite dev server
   ],
   credentials: true,
