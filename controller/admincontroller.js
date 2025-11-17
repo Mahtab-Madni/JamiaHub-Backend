@@ -163,20 +163,34 @@ export async function getresources(req, res) {
 
 export async function addevents(req, res) {
   try {
-    const { title, date, time, location, category ,organizer,attendees, description, uploadedBy } = req.body;
+    const { title, date, time, location, category, organizer, attendees, description, uploadedBy } = req.body;
     const imageFile = req.file;
-     
-    const imageUrl = `/uploads/${imageFile.filename}`;
-
-    if (!title || !date || !time || !location || !category || !imageFile  || !organizer ) {
+    
+    if (!title || !date || !time || !location || !category || !imageFile || !organizer) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    const newEvent = new Event({ title, date, time, location, category, image: imageUrl ,organizer,attendees,description, uploadedBy });
+
+    // Convert buffer to base64 for serverless environment
+    const imageUrl = `data:${imageFile.mimetype};base64,${imageFile.buffer.toString('base64')}`;
+    
+    const newEvent = new Event({ 
+      title, 
+      date, 
+      time, 
+      location, 
+      category, 
+      image: imageUrl, 
+      organizer, 
+      attendees, 
+      description, 
+      uploadedBy 
+    });
+    
     await newEvent.save();
     res.status(201).json({ message: "Event added successfully", event: newEvent });
   } catch (err) {
     console.error("Error adding event:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 }
 
@@ -192,14 +206,15 @@ export async function getEvents(req,res){
 
 export async function addBlogs(req,res){
   try {
-    const { title, author, date, excerpt, tags, category, content } = req.body;  // Removed 'likes' from destructuring
+    const { title, author, date, excerpt, tags, category, content } = req.body;
     const imageFile = req.file;
-     
-    const imageUrl = `/uploads/${imageFile.filename}`;
-
-    if (!title  || !author || !excerpt || !imageFile || !tags || !category || !content) {  // Removed 'likes' from validation
+    
+    if (!title || !author || !excerpt || !imageFile || !tags || !category || !content) {
       return res.status(400).json({ message: "All fields are required" });
     }
+
+    // Convert buffer to base64 for serverless environment
+    const imageUrl = `data:${imageFile.mimetype};base64,${imageFile.buffer.toString('base64')}`;
     
     const newBlog = new Blog({ 
       title, 
@@ -211,15 +226,15 @@ export async function addBlogs(req,res){
       content, 
       image: imageUrl, 
       uploadedBy: req.user._id,
-      likes: 0,  // Set initial likes to 0
-      likedBy: []  // Initialize empty array for likedBy
+      likes: 0,
+      likedBy: []
     });
     
     await newBlog.save();
     res.status(201).json({ message: "Blog added successfully", blog: newBlog });
   } catch (err) {
     console.error("Error adding blog:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 }
 
@@ -273,7 +288,7 @@ export async function delEvent(req,res){
 export async function addLike(req, res) {
   try {
     const blogId = req.params.blogId;
-    const userId = req.user._id; // Assuming you have auth middleware
+    const userId = req.user._id;
     
     const blog = await Blog.findById(blogId);
     
@@ -299,7 +314,7 @@ export async function addLike(req, res) {
 export async function remLike(req, res) {
   try {
     const blogId = req.params.blogId;
-    const userId = req.user._id; // Assuming you have auth middleware
+    const userId = req.user._id;
     
     const blog = await Blog.findById(blogId);
     

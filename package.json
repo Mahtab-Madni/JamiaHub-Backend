@@ -1,6 +1,7 @@
 {
   "name": "jamiahub",
   "version": "1.0.0",
+  "type": "module",
   "description": "This folder is being created to learn express in deeply",
   "main": "App.js",
   "scripts": {
