@@ -3,6 +3,7 @@ import Subject from '../Models/Subjects.js';
 import Event from '../Models/Events.js';
 import Blog from '../Models/Blogs.js';
 import mongoose from 'mongoose';
+import { put, del } from '@vercel/blob';
 
 
 export async function addresources(req, res) {
@@ -170,8 +171,15 @@ export async function addevents(req, res) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Convert buffer to base64 for serverless environment
-    const imageUrl = `data:${imageFile.mimetype};base64,${imageFile.buffer.toString('base64')}`;
+    // Upload image to Vercel Blob
+    const blob = await put(
+      `events/${Date.now()}-${imageFile.originalname}`,
+      imageFile.buffer,
+      {
+        access: 'public',
+        contentType: imageFile.mimetype,
+      }
+    );
     
     const newEvent = new Event({ 
       title, 
@@ -179,7 +187,7 @@ export async function addevents(req, res) {
       time, 
       location, 
       category, 
-      image: imageUrl, 
+      image: blob.url, // Store the Vercel Blob URL
       organizer, 
       attendees, 
       description, 
@@ -204,7 +212,7 @@ export async function getEvents(req,res){
   }
 }
 
-export async function addBlogs(req,res){
+export async function addBlogs(req, res) {
   try {
     const { title, author, date, excerpt, tags, category, content } = req.body;
     const imageFile = req.file;
@@ -213,8 +221,15 @@ export async function addBlogs(req,res){
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Convert buffer to base64 for serverless environment
-    const imageUrl = `data:${imageFile.mimetype};base64,${imageFile.buffer.toString('base64')}`;
+    // Upload image to Vercel Blob
+    const blob = await put(
+      `blogs/${Date.now()}-${imageFile.originalname}`,
+      imageFile.buffer,
+      {
+        access: 'public',
+        contentType: imageFile.mimetype,
+      }
+    );
     
     const newBlog = new Blog({ 
       title, 
@@ -224,7 +239,7 @@ export async function addBlogs(req,res){
       category,
       date,
       content, 
-      image: imageUrl, 
+      image: blob.url, // Store the Vercel Blob URL
       uploadedBy: req.user._id,
       likes: 0,
       likedBy: []
@@ -237,7 +252,6 @@ export async function addBlogs(req,res){
     res.status(500).json({ message: "Server error", error: err.message });
   }
 }
-
 export async function blogs(req, res) {
   try {
     const blogs = await Blog.find().populate('uploadedBy', 'name email');
@@ -248,39 +262,41 @@ export async function blogs(req, res) {
   }
 }
 
-export async function delEvent(req,res){
+export async function delEvent(req, res) {
   try {
-    const { eventId } = req.params;
+    const eventId = req.params.id;
     
-    if (!eventId) {
-      return res.status(400).json({ message: "Event ID is required" });
-    }
-
-    // Validate if resourceId is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(eventId)) {
-      return res.status(400).json({ message: "Invalid event ID format" });
-    }
-
-    // Find the resource
+    // Get the event from database
     const event = await Event.findById(eventId);
     
     if (!event) {
-      return res.status(404).json({ message: "Event not found" });
+      return res.status(404).json({ message: 'Event not found' });
     }
 
-    // Delete the resource
+    // Delete image from Vercel Blob if it exists
+    if (event.image && event.image.includes('vercel-storage.com')) {
+      try {
+        await del(event.image);
+        console.log('Blob image deleted successfully');
+      } catch (blobError) {
+        console.error('Error deleting blob:', blobError);
+        // Continue with event deletion even if blob deletion fails
+      }
+    }
+
+    // Delete event from database
     await Event.findByIdAndDelete(eventId);
-    
-    res.status(200).json({ 
-      message: "Event deleted successfully",
-      deletedEventId: eventId 
+
+    res.status(200).json({
+      success: true,
+      message: 'Event deleted successfully'
     });
-  }
-  catch (err) {
-    console.error("Error deleting event:", err);
+
+  } catch (error) {
+    console.error('Error deleting event:', error);
     res.status(500).json({ 
-      message: "Server error",
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      message: 'Failed to delete event', 
+      error: error.message 
     });
   }
 }

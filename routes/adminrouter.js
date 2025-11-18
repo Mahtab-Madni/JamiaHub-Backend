@@ -4,13 +4,22 @@ import { protectRoute } from "../middleware/authmiddleware.js";
 import { addBlogs, addevents, addLike, addresources, blogs, deleteresources, delEvent, editresources, getEvents, getresources, getsubjects, remLike } from '../controller/admincontroller.js';
 import { addsubjects } from '../controller/admincontroller.js';
 
+
 const adminRouter = express.Router();
 
-// Use memory storage for Vercel
 const storage = multer.memoryStorage();
 const upload = multer({ 
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
 });
 
 adminRouter.post('/add-resource', protectRoute, addresources);

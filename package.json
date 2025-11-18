@@ -7,11 +7,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node App.js",
-    "vercel-start"  :  "node App.js"
+    "vercel-start": "node App.js"
   },
   "author": "Mahtab Mdni",
   "license": "ISC",
   "dependencies": {
+    "@vercel/blob": "^2.0.0",
     "bcryptjs": "^3.0.2",
     "connect-mongodb-session": "^5.0.0",
     "cookie-parser": "^1.4.7",
