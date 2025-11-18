@@ -4,6 +4,9 @@ import jwt from "jsonwebtoken";
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
+    
+    console.log('Login attempt for:', email);
+    
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
@@ -22,19 +25,17 @@ export async function login(req, res) {
       expiresIn: "7d",
     });
 
-    res.cookie("jwt", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "nane",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-    console.log("Cookie set with token:", token); // Add this
-    console.log("Response headers:", res.getHeaders()); // Add this
+    console.log("Token generated successfully");
 
-    res.status(200).json({ success: true, user });
+    // Return token in response body for localStorage
+    res.status(200).json({ 
+      success: true, 
+      user,
+      token // Send token to frontend
+    });
   } catch (err) {
-    console.error("Error during login:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error during login:", err.message);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 }
 
@@ -92,7 +93,6 @@ export async function signup(req, res) {
 }
 
 export async function logout(req, res) {
-  res.clearCookie("jwt")
   res.status(200).json({ success: true, message: "Logged out successfully" });
 }
 
