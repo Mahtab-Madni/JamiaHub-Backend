@@ -24,8 +24,8 @@ export async function login(req, res) {
 
     res.cookie("jwt", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,
+      sameSite: "nane",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
     console.log("Cookie set with token:", token); // Add this
