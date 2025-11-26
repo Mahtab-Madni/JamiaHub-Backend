@@ -12,7 +12,10 @@ const userSchema = new mongoose.Schema({
   sem: { type: String, enum: ["1", "2", "3", "4", "5", "6", "7", "8"] },
   isOnboarded: { type: Boolean, default: false },
   groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }],
-  avatar: {type: String, default: ""}
+  avatar: {type: String, default: ""},
+  emailOtp:{type:String},
+  emailOtpExpiry: {type:Date},
+  isVerified: {type:Boolean, default:false}
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {

@@ -1,6 +1,102 @@
 import { upsertStreamUser } from '../lib/stream.js';
 import  User  from '../Models/user.js';
 import jwt from "jsonwebtoken";
+import { otpGenerate } from "../utils/otpGenerator.js";
+import { sendVerificationEmail } from '../services/sendOTP.js';
+import OtpStore from '../Models/otpStore.js';
+
+export async function sendOtp(req, res) {
+  const { email } = req.body;
+
+  try {
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const emailRegrex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegrex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    // Generate OTP
+    const otp = otpGenerate();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Store OTP temporarily (you might want to use Redis for this)
+    // For now, we'll store it in a temporary collection or in-memory store
+    await OtpStore.findOneAndUpdate(
+      { email },
+      { otp, otpExpiry },
+      { upsert: true, new: true }
+    );
+
+    // Send OTP via email (this will throw error if email doesn't exist/invalid)
+    try {
+      await sendVerificationEmail(email, otp);
+    } catch (emailError) {
+      // Clean up OTP store if email sending fails
+      await OtpStore.deleteOne({ email });
+      return res.status(400).json({
+        message:
+          "Failed to send email. Please check if the email address is valid.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "OTP sent to your email successfully",
+    });
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+    res.status(500).json({ message: "Failed to send OTP" });
+  }
+}
+
+export async function verifyOtp(req, res) {
+  const { email, otp } = req.body;
+
+  try {
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    const otpRecord = await OtpStore.findOne({ email });
+
+    if (!otpRecord) {
+      return res
+        .status(400)
+        .json({ message: "OTP not found. Please request a new one" });
+    }
+
+    if (otpRecord.otpExpiry < new Date()) {
+      await OtpStore.deleteOne({ email });
+      return res
+        .status(400)
+        .json({ message: "OTP has expired. Please request a new one" });
+    }
+
+    if (otpRecord.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // OTP is valid
+    await OtpStore.deleteOne({ email });
+
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully",
+    });
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    res.status(500).json({ message: "Failed to verify OTP" });
+  }
+}
+
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
@@ -71,6 +167,7 @@ export async function signup(req, res) {
       name,
       password,
       avatar: randomAvatar,
+      isVerified: true,
     });
     try {
       await upsertStreamUser({
