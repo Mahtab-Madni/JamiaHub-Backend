@@ -472,6 +472,7 @@ export async function joinGroup(req, res) {
 export async function getFeedback(req, res) {
   try {
     const { email, message } = req.body;
+    const name = 'Anonymous';
     
     if (!email || !message) {  
       return res.status(400).json({ message: "All fields are required" });
@@ -480,6 +481,15 @@ export async function getFeedback(req, res) {
     const newFeedback = new Connect({ email, message });
     await newFeedback.save();
     
+    try {
+      await sendFeedbackEmail(name, email, message);
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+      return res.status(500).json({
+        message: "Form saved but email not sent",
+      });
+    }
+
     res.status(201).json({ 
       message: "Feedback submitted successfully", 
       feedback: newFeedback 
