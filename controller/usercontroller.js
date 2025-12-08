@@ -4,6 +4,7 @@ import { StreamChat } from 'stream-chat';
 import { v4 as uuidv4 } from 'uuid';
 import 'dotenv/config';
 import Connect from '../Models/Connect.js';
+import { sendFeedbackEmail } from '../services/sentFeedback.js';
 
 const apiKey = process.env.STREAM_API_KEY;
 const apiSecret = process.env.STREAM_API_SECRET;
@@ -489,18 +490,37 @@ export async function getFeedback(req, res) {
   }
 }
 
-export async function connectForm (req,res){
+export async function connectForm(req, res) {
   try {
     const { name, email, message } = req.body;
-    if ( !name || !email || !message ) {  
+
+    // Validate required fields
+    if (!name || !email || !message) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const newConnect = new Connect({ name, email, message});
+    // Save to database
+    const newConnect = new Connect({ name, email, message });
     await newConnect.save();
-    res.status(201).json({ message: "Form Submitted successfully", connect: newConnect });
+
+    // Try sending feedback email
+    try {
+      await sendFeedbackEmail(name, email, message);
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+      return res.status(500).json({
+        message: "Form saved but email not sent",
+      });
+    }
+
+    // Single success response
+    return res.status(201).json({
+      success: true,
+      message: "Form submitted successfully",
+      connect: newConnect,
+    });
   } catch (err) {
-    console.error("Error submitting Form:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error submitting form:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 }
