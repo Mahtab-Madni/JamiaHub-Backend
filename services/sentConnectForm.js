@@ -11,20 +11,21 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export async function sendFeedbackEmail(email, message) {
+export async function sendConnectEmail(name, email, message) {
   const mailOptions = {
     from: `JamiaHub <${process.env.EMAIL_USER}>`,
     to: process.env.MY_EMAIL,
-    subject: "JamiaHub - User Feedback",
+    subject: "JamiaHub - New Connection Request",
     html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-        <h2 style="color: #333; margin-bottom: 10px;">New Feedback Received</h2>
+        <h2 style="color: #333; margin-bottom: 10px;">New Connection Message</h2>
         <p style="color: #555; margin: 0 0 15px;">
-          You have received new feedback from a JamiaHub user .
+          A JamiaHub user has reached out to connect with you.
         </p>
         <div style="background-color: #f9f9f9; padding: 20px; border-radius: 6px; margin: 20px 0; border: 1px solid #e0e0e0;">
+          <p style="margin: 0; color: #333;"><strong>Name:</strong> ${name}</p>
           <p style="margin: 0; color: #333;"><strong>Email:</strong> ${email}</p>
-          <p style="margin-top: 10px; color: #333;"><strong>Feedback:</strong></p>
+          <p style="margin-top: 10px; color: #333;"><strong>Message:</strong></p>
           <p style="margin: 0; color: #555;">${message}</p>
         </div>
         <p style="color: #999; font-size: 12px; margin: 20px 0 0; text-align: center;">
@@ -40,9 +41,9 @@ export async function sendFeedbackEmail(email, message) {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log("Feedback email sent successfully");
+    console.log("Connection email sent successfully");
   } catch (error) {
     console.error("Error sending email:", error);
-    throw new Error("Failed to send Feedback email");
+    throw new Error("Failed to send connection email");
   }
 }

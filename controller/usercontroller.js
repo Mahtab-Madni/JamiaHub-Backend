@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import 'dotenv/config';
 import Connect from '../Models/Connect.js';
 import { sendFeedbackEmail } from '../services/sentFeedback.js';
+import { sendConnectEmail } from '../services/sentConnectForm.js';
 
 const apiKey = process.env.STREAM_API_KEY;
 const apiSecret = process.env.STREAM_API_SECRET;
@@ -472,7 +473,6 @@ export async function joinGroup(req, res) {
 export async function getFeedback(req, res) {
   try {
     const { email, message } = req.body;
-    const name = 'Anonymous';
     
     if (!email || !message) {  
       return res.status(400).json({ message: "All fields are required" });
@@ -482,7 +482,7 @@ export async function getFeedback(req, res) {
     await newFeedback.save();
     
     try {
-      await sendFeedbackEmail(name, email, message);
+      await sendFeedbackEmail( email, message);
     } catch (emailError) {
       console.error("Email sending failed:", emailError);
       return res.status(500).json({
@@ -515,7 +515,7 @@ export async function connectForm(req, res) {
 
     // Try sending feedback email
     try {
-      await sendFeedbackEmail(name, email, message);
+      await sendConnectEmail(name, email, message);
     } catch (emailError) {
       console.error("Email sending failed:", emailError);
       return res.status(500).json({
