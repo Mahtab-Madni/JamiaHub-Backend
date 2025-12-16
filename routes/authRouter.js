@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, signup, logout, onboard, sendOtp, verifyOtp } from "../controller/authcontroller.js";
+import { login, signup, logout, onboard, sendOtp, verifyOtp, forgotPassword, resetPassword } from "../controller/authcontroller.js";
 import { protectRoute } from "../middleware/authmiddleware.js";
 
 const authRouter = Router();
@@ -15,6 +15,10 @@ authRouter.post("/onboarding",protectRoute, onboard);
 authRouter.post("/send-otp",sendOtp);
 
 authRouter.post("/verify-otp",verifyOtp);
+
+authRouter.post("/forgot-password", forgotPassword);
+
+authRouter.post("/reset-password", resetPassword);
 
 authRouter.get("/test-cookie", (req, res) => {
   console.log("Test - All cookies:", req.cookies);

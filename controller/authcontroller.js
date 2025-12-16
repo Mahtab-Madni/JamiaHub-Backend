@@ -1,9 +1,11 @@
 import { upsertStreamUser } from '../lib/stream.js';
 import  User  from '../Models/user.js';
 import jwt from "jsonwebtoken";
+import crypto  from "crypto";
 import { otpGenerate } from "../utils/otpGenerator.js";
 import { sendVerificationEmail } from '../services/sendOTP.js';
 import OtpStore from '../Models/otpStore.js';
+import { sendPasswordResetEmail } from '../services/sendResetLink.js';
 
 export async function sendOtp(req, res) {
   const { email } = req.body;
@@ -192,6 +194,91 @@ export async function signup(req, res) {
 export async function logout(req, res) {
   res.status(200).json({ success: true, message: "Logged out successfully" });
 }
+
+
+export async function forgotPassword(req, res) {
+  const email = req.body;
+
+  if (!email ) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(400).json({ message: "Email has not been used" });
+  }
+
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  const resetUrl = `https://jamiahub.github.io/JAMIAHUB/reset-password?token=${resetToken}`;
+
+  try {
+
+    await sendPasswordResetEmail(user.email, resetUrl, user.name);
+
+    res.status(200).json({
+      message: "Password reset link sent to your email",
+    });
+  } catch (emailError) {
+    // If email fails, clear the reset token
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    console.error("Email sending failed:", emailError);
+    return res.status(500).json({
+      message: "Failed to send password reset email. Please try again later.",
+    });
+  }
+}
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        message: "Token and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    // Hash the token to compare with database
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    // Find user with valid token that hasn't expired
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid or expired reset token",
+      });
+    }
+
+    // Update password 
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json({
+      message:
+        "Password reset successfully. You can now login with your new password.",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ message: "Server error. Please try again later." });
+  }
+};
 
 export async function onboard(req, res) {
   try {
