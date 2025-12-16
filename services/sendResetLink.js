@@ -42,7 +42,7 @@ export async function sendPasswordResetEmail(email, resetUrl, userName) {
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           }
           .header {
-            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
+            background: black;
             color: #ffffff;
             padding: 30px 20px;
             text-align: center;
@@ -100,7 +100,7 @@ export async function sendPasswordResetEmail(email, resetUrl, userName) {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🔐 JamiaHub Password Reset</h1>
+            <h1> JamiaHub Password Reset</h1>
           </div>
           <div class="content">
             <h2>Hello ${userName || "JamiaHub Member"}!</h2>
@@ -114,7 +114,7 @@ export async function sendPasswordResetEmail(email, resetUrl, userName) {
             <p><a href="${resetUrl}" class="link">${resetUrl}</a></p>
             
             <div class="warning">
-              <strong>⚠️ Important:</strong>
+              <strong> Important:</strong>
               <ul style="margin: 10px 0; padding-left: 20px;">
                 <li>This reset link will expire in <strong>1 hour</strong>.</li>
                 <li>If you didn't request this, you can safely ignore this email.</li>

@@ -211,7 +211,7 @@ export async function forgotPassword(req, res) {
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  const resetUrl = `https://jamiahub.github.io/JAMIAHUB/reset-password?token=${resetToken}`;
+  const resetUrl = `http:/localhost:3000/reset-password?token=${resetToken}`;
 
   try {
 
