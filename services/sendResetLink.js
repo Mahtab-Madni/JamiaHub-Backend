@@ -13,7 +13,6 @@ const transporter = nodemailer.createTransport({
 
 // Send password reset email
 export async function sendPasswordResetEmail(email, resetUrl, userName) {
-  const transporter = createTransporter();
   const mailOptions = {
     from: `JamiaHub <${process.env.EMAIL_USER}>`,
     to: email,
