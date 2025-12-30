@@ -2,6 +2,7 @@ import User from '../Models/user.js';
 import Group from '../Models/Groups.js';
 import { StreamChat } from 'stream-chat';
 import { v4 as uuidv4 } from 'uuid';
+import {put,del} from "@vercel/blob";
 import 'dotenv/config';
 import Connect from '../Models/Connect.js';
 import { sendFeedbackEmail } from '../services/sentFeedback.js';
@@ -534,3 +535,133 @@ export async function connectForm(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
+
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error in getProfile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const {
+      name,
+      studentId,
+      branch,
+      sem,
+      gender,
+      phoneNumber,
+      dateOfBirth,
+      bio,
+    } = req.body;
+
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (name) user.name = name;
+    if (studentId) user.studentId = studentId;
+    if (branch) user.branch = branch;
+    if (sem) user.sem = sem;
+    if (gender) user.gender = gender;
+    if (phoneNumber) {
+      // Checking if phone number already exists for another user
+      const existingUser = await User.findOne({
+        phoneNumber,
+        _id: { $ne: userId },
+      });
+      if (existingUser) {
+        return res.status(400).json({ message: "Phone number already in use" });
+      }
+      user.phoneNumber = phoneNumber;
+    }
+    if (dateOfBirth) user.dateOfBirth = dateOfBirth;
+    if (bio) user.bio = bio;
+
+    // Handle avatar upload
+    if (req.file) {
+      try {
+        if (user.avatar) {
+          try {
+            await del(user.avatar);
+          } catch (deleteError) {
+            console.error("Error deleting old avatar:", deleteError);
+          }
+        }
+
+        const blob = await put(
+          `avatars/${userId}-${Date.now()}-${req.file.originalname}`,
+          req.file.buffer,
+          {
+            access: "public",
+            contentType: req.file.mimetype,
+          }
+        );
+
+        user.avatar = blob.url;
+      } catch (uploadError) {
+        console.error("Error uploading avatar:", uploadError);
+        return res.status(500).json({ message: "Failed to upload avatar" });
+      }
+    }
+
+    // Save updated user
+    await user.save();
+    const updatedUser = await User.findById(userId).select("-password");
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error in updateProfile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Delete avatar
+export const deleteAvatar = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Delete avatar from Vercel Blob if it exists
+    if (user.avatar) {
+      try {
+        await del(user.avatar);
+      } catch (error) {
+        console.error("Error deleting avatar from Vercel Blob:", error);
+      }
+    }
+
+    // Remove avatar from user
+    user.avatar = "";
+    await user.save();
+
+    const updatedUser = await User.findById(userId).select("-password");
+
+    res.status(200).json({
+      message: "Avatar deleted successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error in deleteAvatar:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

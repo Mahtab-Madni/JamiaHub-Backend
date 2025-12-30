@@ -138,10 +138,10 @@ export async function login(req, res) {
 }
 
 export async function signup(req, res) {
-  const { email, password, name } = req.body;
+  const { email, password, name, role , branch, sem } = req.body;
 
   try {
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -167,9 +167,12 @@ export async function signup(req, res) {
     const newUser = await User.create({
       email,
       name,
+      role,
       password,
       avatar: randomAvatar,
       isVerified: true,
+      branch,
+      sem,
     });
     try {
       await upsertStreamUser({
@@ -178,7 +181,6 @@ export async function signup(req, res) {
         image: newUser.avatar || "",
       });
     } catch (error) {
-      // If Stream user creation fails, we should still allow the user to sign up
       console.error('Failed to create Stream user:', error);
     }
     res.status(201).json({
@@ -194,7 +196,6 @@ export async function signup(req, res) {
 export async function logout(req, res) {
   res.status(200).json({ success: true, message: "Logged out successfully" });
 }
-
 
 export async function forgotPassword(req, res) {
   const { email } = req.body;

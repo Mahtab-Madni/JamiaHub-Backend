@@ -20,6 +20,18 @@ const userSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    studentId: { type: String },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Prefer not to say"],
+    },
+    role: {
+      type: String,
+      enum: ["student", "faculty", "alumni", "admin"],
+      default: "student",
+    },
+    phoneNumber: { type: String, unique: true },
+    dateOfBirth: { type: Date },
   },
   { timestamps: true }
 );

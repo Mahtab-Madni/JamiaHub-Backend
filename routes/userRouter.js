@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createGroup,getAllGroups,getGroupsbyUser,leaveGroup,deleteGroup,editGroup, joinGroup, connectForm, getFeedback } from "../controller/usercontroller.js";
+import { createGroup,getAllGroups,getGroupsbyUser,leaveGroup,deleteGroup,editGroup, joinGroup, connectForm, getFeedback, updateProfile, getProfile } from "../controller/usercontroller.js";
 import { protectRoute } from "../middleware/authmiddleware.js";
 
 const userRouter = Router();
@@ -21,5 +21,8 @@ userRouter.post('/groups/:groupId/join', protectRoute, joinGroup);
 userRouter.post('/feedback',getFeedback);
 
 userRouter.post('/connect',connectForm);
+
+userRouter.put('/profile', protectRoute, updateProfile).get('/profile', protectRoute, getProfile);
+
 
 export default userRouter;
