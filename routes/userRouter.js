@@ -39,7 +39,7 @@ userRouter.post('/feedback',getFeedback);
 
 userRouter.post('/connect',connectForm);
 
-userRouter.put('/profile', protectRoute, updateProfile).get('/profile',upload.single('image'), protectRoute, getProfile);
+userRouter.put('/profile',upload.single('image'), protectRoute, updateProfile).get('/profile', protectRoute, getProfile);
 
 
 export default userRouter;
