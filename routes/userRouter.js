@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createGroup,getAllGroups,getGroupsbyUser,leaveGroup,deleteGroup,editGroup, joinGroup, connectForm, getFeedback, updateProfile, getProfile } from "../controller/usercontroller.js";
+import { createGroup,getAllGroups,getGroupsbyUser,leaveGroup,deleteGroup,editGroup, joinGroup, connectForm, getFeedback, updateProfile, getProfile, deleteAvatar } from "../controller/usercontroller.js";
 import { protectRoute } from "../middleware/authmiddleware.js";
 import multer from "multer";
 
@@ -39,7 +39,8 @@ userRouter.post('/feedback',getFeedback);
 
 userRouter.post('/connect',connectForm);
 
-userRouter.put('/profile',upload.single('image'), protectRoute, updateProfile).get('/profile', protectRoute, getProfile);
+userRouter.get('/profile', protectRoute, getProfile).put('/profile', protectRoute, upload.single('avatar'), updateProfile);
 
+userRouter.delete("/avatar", protectRoute, deleteAvatar);
 
 export default userRouter;
