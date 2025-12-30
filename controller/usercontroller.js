@@ -602,7 +602,7 @@ export const updateProfile = async (req, res) => {
           }
         }
 
-        const fileBuffer = await fs.readFile(req.file.path);
+        const fileBuffer = req.file.buffer;
 
         const blob = await put(
           `avatars/${userId}-${Date.now()}-${req.file.originalname}`,
@@ -615,22 +615,11 @@ export const updateProfile = async (req, res) => {
 
         user.avatar = blob.url;
 
-        // Clean up temporary file
-        await fs.unlink(req.file.path);
       } catch (uploadError) {
         console.error("Error uploading avatar:", uploadError);
-        // Clean up temporary file on error
-        if (req.file.path) {
-          try {
-            await fs.unlink(req.file.path);
-          } catch (unlinkError) {
-            console.error("Error deleting temp file:", unlinkError);
-          }
-        }
         return res.status(500).json({ message: "Failed to upload avatar" });
       }
     }
-
     // Save updated user
     await user.save();
     const updatedUser = await User.findById(userId).select("-password");
