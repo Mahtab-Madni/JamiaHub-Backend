@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema(
     },
     phoneNumber: { type: String, unique: true },
     dateOfBirth: { type: Date },
+    bio: { type: String, default: "" },
   },
   { timestamps: true }
 );
