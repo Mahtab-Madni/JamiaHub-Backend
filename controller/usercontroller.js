@@ -2,6 +2,7 @@ import User from '../Models/user.js';
 import Group from '../Models/Groups.js';
 import { StreamChat } from 'stream-chat';
 import { v4 as uuidv4 } from 'uuid';
+import fs from "fs/promises";
 import {put,del} from "@vercel/blob";
 import 'dotenv/config';
 import Connect from '../Models/Connect.js';
@@ -601,9 +602,11 @@ export const updateProfile = async (req, res) => {
           }
         }
 
+        const fileBuffer = await fs.readFile(req.file.path);
+
         const blob = await put(
           `avatars/${userId}-${Date.now()}-${req.file.originalname}`,
-          req.file.buffer,
+          fileBuffer,
           {
             access: "public",
             contentType: req.file.mimetype,
@@ -611,8 +614,19 @@ export const updateProfile = async (req, res) => {
         );
 
         user.avatar = blob.url;
+
+        // Clean up temporary file
+        await fs.unlink(req.file.path);
       } catch (uploadError) {
         console.error("Error uploading avatar:", uploadError);
+        // Clean up temporary file on error
+        if (req.file.path) {
+          try {
+            await fs.unlink(req.file.path);
+          } catch (unlinkError) {
+            console.error("Error deleting temp file:", unlinkError);
+          }
+        }
         return res.status(500).json({ message: "Failed to upload avatar" });
       }
     }
