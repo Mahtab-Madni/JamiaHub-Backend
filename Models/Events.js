@@ -31,8 +31,8 @@ const eventSchema = new mongoose.Schema({
     required: true,
   },
   attendees:{
-    type: Number,
-    default: 0
+    type: String,
+    default: "20"
   },
   description:{
     type: String,
