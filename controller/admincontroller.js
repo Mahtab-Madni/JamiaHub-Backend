@@ -264,7 +264,7 @@ export async function blogs(req, res) {
 
 export async function delEvent(req, res) {
   try {
-    const eventId = req.params.id;
+    const eventId = req.params.eventId;
     
     // Get the event from database
     const event = await Event.findById(eventId);
